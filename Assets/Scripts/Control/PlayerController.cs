@@ -1,8 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using RPG.Movement;
-using System;
+using RPG.Combat;
 
 namespace RPG.Control
 {
@@ -10,32 +11,45 @@ namespace RPG.Control
   {
     private void Update()
     {
-      InteractWithCombat();
-      InteractWithMovement();
+      if (InteractWithCombat()) return;
+      if (InteractWithMovement()) return;
     }
 
-    private void InteractWithCombat()
+    private bool InteractWithCombat()
     {
-      throw new NotImplementedException();
-    }
-
-    private void InteractWithMovement()
-    {
-      if (Input.GetMouseButton(0))
+      RaycastHit[] hits = Physics.RaycastAll(GetMouseRay());
+      foreach (RaycastHit hit in hits)
       {
-        MoveToCursor();
+        CombatTarget target = hit.transform.GetComponent<CombatTarget>();
+        if (target == null) continue;
+
+        if (Input.GetMouseButtonDown(0))
+        {
+          GetComponent<Fighter>().Attack(target);
+        }
+        return true;
       }
+      return false;
     }
 
-    private void MoveToCursor()
+    private bool InteractWithMovement()
     {
-      Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
       RaycastHit hit;
-      bool hasHit = Physics.Raycast(ray, out hit);
+      bool hasHit = Physics.Raycast(GetMouseRay(), out hit);
       if (hasHit)
       {
-        GetComponent<Mover>().MoveTo(hit.point);
+        if (Input.GetMouseButton(0))
+        {
+        	GetComponent<Mover>().MoveTo(hit.point);
+        }
+        return true;
       }
+      return false;
+    }
+
+    private static Ray GetMouseRay()
+    {
+      return Camera.main.ScreenPointToRay(Input.mousePosition);
     }
   }
 }
